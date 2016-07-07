@@ -1,0 +1,14 @@
+{
+  "manifest_version": 2,
+
+  "name": "Hide watched YouTube videos",
+  "description": "Automatically hide watched YouTube videos from listings on YouTube pages",
+  "version": "1.0",
+
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["contentscript.js"]
+    }
+  ]
+}
