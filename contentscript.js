@@ -17,17 +17,58 @@ function getNthParentElement(e, n) {
     return getNthParentElement(e.parentElement, n-1);
 }
 
-function removeWatchedVideos(parentLevel) {
+var hiddenElements = new Map();
+var hideOrShowWatchedVideos = showWatchedVideos;
+
+var hideCSS = {
+	//"border": "1px solid red",
+	"display": "none"
+}
+
+function hideElement(e) {
+	if(e && !hiddenElements.has(e)) {
+		var val = {};
+		for(var csskey in hideCSS) {
+		    // remember old CSS
+		    val[csskey] = e.style[csskey];
+		    // set new CSS
+		    e.style[csskey] = hideCSS[csskey];
+		}
+	        hiddenElements.set(e, val);
+
+		//e.parentNode.removeChild(pe);
+
+		return true;
+	}
+	return false;
+}
+
+function hideWatchedVideos(parentLevel) {
     var watchedlist = document.getElementsByClassName("watched");
 
-    if(watchedlist.length > 0) debug("Found "+watchedlist.length+" watched videos, hiding them.");
-
+    var counter = 0;
     // iterate in reverse order to avoid race condition...
     for(var ei = watchedlist.length - 1; ei >= 0; ei--) {
 	var e = watchedlist[ei];
 	var pe = getNthParentElement(e, parentLevel);
-	if(pe) pe.parentNode.removeChild(pe);
+	if(hideElement(pe)) {
+  	    counter++;
+	}
     }
+    if(counter > 0) debug("Found "+counter+" extra watched videos and hid them.");
+}
+
+function showWatchedVideos() {
+    var counter = 0;
+    hiddenElements.forEach(function(val, key) {
+	for(var csskey in hideCSS) {
+	    // restore CSS
+	    key.style[csskey] = val[csskey];
+	}
+	counter++;
+    });
+    hiddenElements = new Map();
+    if(counter > 0) debug("Restored "+counter+" hidden videos.");
 }
 
 function showParentsOfFirstWatched() {
@@ -65,6 +106,14 @@ function getParentLevelFromPage(loc) {
     return -1;
 }
 
+function switchWatchVideosFunction(v) {
+	if(v) {
+		hideOrShowWatchedVideos = hideWatchedVideos;
+	} else {
+		hideOrShowWatchedVideos = showWatchedVideos;
+	}
+}
+
 var pageParentLevel = -1;
 var currentLocation = "";
 setInterval(function() { 
@@ -72,6 +121,9 @@ setInterval(function() {
 	currentLocation = window.location.href;
 	pageParentLevel = getParentLevelFromPage(currentLocation);
     }
-    removeWatchedVideos(pageParentLevel); 
-}, 500);
+    hideOrShowWatchedVideos(pageParentLevel); 
+}, 300);
+
+chrome.storage.onChanged.addListener(function(data) { switchWatchVideosFunction(data["state"]["newValue"]["active"]); });
+chrome.storage.local.get({'state': {"active": "true"}}, function(result) { switchWatchVideosFunction(result["state"]["active"]); });
 

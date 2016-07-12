@@ -3,12 +3,21 @@
 
   "name": "Hide watched YouTube videos",
   "description": "Automatically hide watched YouTube videos from listings on YouTube pages",
-  "version": "1.0",
+  "version": "1.1",
+
+  "permissions": [
+    "storage", "http://*/*", "https://*/*"
+  ],
 
   "content_scripts": [
     {
       "matches": ["https://www.youtube.com/*"],
       "js": ["contentscript.js"]
     }
-  ]
+  ],
+
+  "browser_action": {
+    "default_icon": "images/icon.png",
+    "default_popup": "popup.html"
+  }
 }
